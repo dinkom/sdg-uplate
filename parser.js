@@ -48,12 +48,46 @@
   }
   function canonProgram(p, known) {
     if (!p) return '';
-    return known.find(k => k.toLowerCase() === p.toLowerCase()) ||
-           known.find(k => similar(k, p)) || cap(p);
+    const exact = known.find(k => k.toLowerCase() === p.toLowerCase()) || known.find(k => similar(k, p));
+    if (exact) return exact;
+    // skraćeno: "kružni" -> "Kružni treninzi", "krav" -> "Krav maga"
+    const pw = p.toLowerCase().split(/\s+/);
+    const pref = known.filter(k => { const kw = k.split(/\s+/); return kw.length > pw.length && similar(kw.slice(0, pw.length).join(' '), p); });
+    if (pref.length === 1) return pref[0];
+    let best = null, bd = Infinity;
+    for (const k of known) {
+      const d = lev(fold(k), fold(p));
+      if (d < bd && d <= Math.max(1, Math.floor(k.length / 4))) { bd = d; best = k; }
+    }
+    return best || cap(p);
   }
 
+  // česta kriva čitanja prepoznavanja govora -> pravi naziv programa
+  const B = '(?<![\\p{L}\\d])', E = '(?![\\p{L}])';
+  const ALIASES = [
+    // krav maga, crow maga, kraw maga, grav maga, krov maka, crawl magu, kravmaga...
+    [new RegExp(B + '[ckg]r[aeiou]{1,2}[a-z]{0,3}\\s*-?\\s*ma[gkc]h?[aeiou]?' + E, 'giu'), 'Krav maga'],
+    // BJJ, BJ, B J J, b.j.j., bi dži dži, be je je, jiu jitsu, brazilski jiu jitsu...
+    [new RegExp(B + '(?:brazilsk[a-z]*\\s+)?(?:j[iu]{1,2}|d[žz]i?u|đu)[\\s-]*(?:j|d[žz]|đ)i[tcć]s?u' + E, 'giu'), 'BJJ'],
+    [new RegExp(B + '(?:b\\.?\\s*j\\.?\\s*j?\\.?|bi\\s*d[žz]i(?:\\s*d[žz]i)?|be\\s*je(?:\\s*je)?|be\\s*jot(?:\\s*jot)?|b\\s*jot(?:\\s*jot)?)' + E, 'giu'), 'BJJ'],
+  ];
+  function fixAliases(s) {
+    for (const [re, rep] of ALIASES) s = s.replace(re, rep);
+    return s;
+  }
+
+  // Levenshtein za sitne greške ("kruzni treninzi", "pilatez")
+  function lev(a, b) {
+    const d = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+    for (let j = 1; j <= b.length; j++) d[0][j] = j;
+    for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++)
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    return d[a.length][b.length];
+  }
+  const fold = s => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd');
+
   function parse(input, known = []) {
-    let s = wordsToDigits(String(input || '').trim())
+    let s = wordsToDigits(fixAliases(String(input || '').trim()))
       .replace(/€\s*(\d+(?:[.,]\d{1,2})?)/, '$1 €');
     const m = s.match(/(\d+(?:[.,]\d{1,2})?)\s*(eura|euro|eur|€)?/i);
     if (!m) {
@@ -72,10 +106,20 @@
         if (nameToks.length > kw && similar(nameToks.slice(-kw).join(' '), k)) {
           program = k; nameToks = nameToks.slice(0, -kw); break;
         }
+        // "Krav maga, Selver, 48 eura"
+        if (nameToks.length > kw && similar(nameToks.slice(0, kw).join(' '), k)) {
+          program = k; nameToks = nameToks.slice(kw); break;
+        }
       }
     }
     return { name: nameToks.map(cap).join(' '), amount, program: canonProgram(program, known) };
   }
 
-  g.SDGParse = { parse, wordsToDigits };
+  // ocjena koliko je rezultat "smislen" - za odabir najbolje varijante prepoznatog govora
+  function score(r, known) {
+    return (r.amount != null ? 2 : 0) + (r.name ? 1 : 0) +
+           (r.program ? (known.includes(r.program) ? 3 : 1) : 0);
+  }
+
+  g.SDGParse = { parse, wordsToDigits, fixAliases, score };
 })(typeof window !== 'undefined' ? window : globalThis);

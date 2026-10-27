@@ -1,5 +1,5 @@
 // SDG Uplate - offline cache. Kod svake nove verzije povećaj broj u CACHE.
-const CACHE = 'sdg-uplate-v1';
+const CACHE = 'sdg-uplate-v2';
 const FILES = ['./', './index.html', './parser.js', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
 
 self.addEventListener('install', e => {
