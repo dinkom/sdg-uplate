@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SDG Uplate</title>
+<meta name="theme-color" content="#1c1f17">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#1c1f17; --card:#262a1f; --card2:#2f3426; --line:#3b4130;
+  --text:#f2ecdc; --muted:#a7a58f; --gold:#e3b23c; --gold-d:#b98d22;
+  --ok:#7fb069; --bad:#d9634c;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{padding:env(safe-area-inset-top) 0 calc(72px + env(safe-area-inset-bottom))}
+header{padding:16px 16px 6px;display:flex;align-items:baseline;justify-content:space-between}
+header h1{margin:0;font-size:20px;letter-spacing:.3px}
+header h1 b{color:var(--gold)}
+header small{color:var(--muted)}
+main{padding:0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
+.row{display:flex;gap:8px;align-items:center}
+textarea,input,select{width:100%;background:var(--card2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:12px;font:inherit}
+textarea{resize:none;min-height:52px}
+textarea:focus,input:focus,select:focus{outline:2px solid var(--gold);outline-offset:-1px}
+button{font:inherit;border:0;border-radius:10px;padding:12px 16px;background:var(--card2);color:var(--text);cursor:pointer}
+button.primary{background:var(--gold);color:#1c1f17;font-weight:700}
+button.danger{background:transparent;color:var(--bad);border:1px solid var(--bad)}
+button.ghost{background:transparent;border:1px solid var(--line)}
+button:active{transform:scale(.97)}
+.mic{width:64px;height:64px;flex:0 0 64px;border-radius:50%;background:var(--gold);color:#1c1f17;display:grid;place-items:center;padding:0}
+.mic svg{width:28px;height:28px}
+.mic.on{background:var(--bad);color:#fff;animation:pulse 1.2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 #d9634c88}100%{box-shadow:0 0 0 18px #d9634c00}}
+.hint{color:var(--muted);font-size:13px;margin-top:8px}
+.grid3{display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px}
+label{font-size:12px;color:var(--muted);display:block;margin:0 0 3px 2px}
+.btns{display:flex;gap:8px;margin-top:12px}
+.btns button{flex:1}
+.sum{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.big{font-size:26px;font-weight:700;color:var(--gold)}
+.pill{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;background:var(--card2);color:var(--muted);margin:2px 4px 0 0}
+ul.list{list-style:none;margin:0;padding:0}
+ul.list li{display:flex;gap:10px;align-items:center;padding:11px 2px;border-top:1px solid var(--line)}
+ul.list li:first-child{border-top:0}
+.who{flex:1;min-width:0}
+.who b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who span{color:var(--muted);font-size:13px}
+.amt{font-weight:700;white-space:nowrap}
+.chk{width:30px;height:30px;flex:0 0 30px;border-radius:8px;border:2px solid var(--line);background:transparent;padding:0;display:grid;place-items:center;color:#1c1f17}
+.chk.on{background:var(--ok);border-color:var(--ok)}
+.chk svg{width:18px;height:18px}
+li.done .who b,li.done .amt{color:var(--muted)}
+h2{font-size:15px;margin:18px 2px 6px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+details.month{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:10px 0;overflow:hidden}
+details.month summary{list-style:none;padding:14px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+details.month summary::-webkit-details-marker{display:none}
+details.month .body{padding:0 14px 14px}
+.day{font-size:13px;color:var(--gold);margin:12px 0 2px;display:flex;justify-content:space-between}
+.empty{color:var(--muted);text-align:center;padding:18px 0}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:#15170f;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;background:transparent;border-radius:0;padding:14px 0;color:var(--muted);font-size:14px}
+nav button.on{color:var(--gold);font-weight:700}
+.view{display:none}.view.on{display:block}
+dialog{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:16px;width:min(520px,calc(100% - 24px));padding:16px}
+dialog::backdrop{background:#000a}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--gold);color:#1c1f17;padding:10px 16px;border-radius:10px;font-weight:600;opacity:0;transition:.25s;pointer-events:none;max-width:90%;text-align:center}
+.toast.on{opacity:1}
+.prog li{justify-content:space-between}
+a{color:var(--gold)}
+input[type=checkbox]{accent-color:var(--ok)}
+</style>
+</head>
+<body>
+<header>
+  <h1><b>SDG</b> Uplate</h1>
+  <small id="today"></small>
+</header>
+
+<main>
+  <!-- DANAS -->
+  <section class="view on" id="v-danas">
+    <div class="card">
+      <div class="row">
+        <textarea id="txt" rows="2" placeholder="npr. Selver je platio 48 eura za krav maga"></textarea>
+        <button class="mic" id="mic" aria-label="Glasovni unos">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V22h2v-3.08A7 7 0 0 0 19 12h-2Z"/></svg>
+        </button>
+      </div>
+
+      <div id="confirm" hidden>
+        <div class="grid3">
+          <div><label>Ime i/ili prezime</label><input id="f-name" autocomplete="off"></div>
+          <div class="row">
+            <div style="flex:1"><label>Iznos (€)</label><input id="f-amt" inputmode="decimal" autocomplete="off"></div>
+            <div style="flex:1.4"><label>Program</label><input id="f-prog" list="progs" autocomplete="off"></div>
+          </div>
+        </div>
+        <div class="btns">
+          <button class="ghost" id="cancel">Odustani</button>
+          <button class="primary" id="save">Spremi</button>
+        </div>
+      </div>
+      <div class="hint" id="hint">Izgovori ili upiši: ime, iznos i program. Prije spremanja možeš ispraviti podatke.</div>
+    </div>
+
+    <div class="card">
+      <div class="sum">
+        <div>
+          <div class="hint" style="margin:0">Za fiskalizirati danas</div>
+          <div class="big" id="toFisk">0,00 €</div>
+        </div>
+        <div style="text-align:right">
+          <div class="hint" style="margin:0">Ukupno danas</div>
+          <div style="font-weight:700" id="dayTotal">0,00 €</div>
+        </div>
+      </div>
+      <div id="dayProgs" style="margin-top:6px"></div>
+    </div>
+
+    <div class="card">
+      <ul class="list" id="todayList"></ul>
+      <div class="hint">Kvačica = fiskalizirano. Dodir na uplatu za ispravak ili brisanje.</div>
+    </div>
+
+    <div id="olderOpen"></div>
+  </section>
+
+  <!-- MJESECI -->
+  <section class="view" id="v-mjeseci">
+    <div id="months"></div>
+  </section>
+
+  <!-- POSTAVKE -->
+  <section class="view" id="v-postavke">
+    <h2>Programi</h2>
+    <div class="card">
+      <ul class="list prog" id="progList"></ul>
+      <div class="row" style="margin-top:10px">
+        <input id="newProg" placeholder="Novi program">
+        <button class="primary" id="addProg" style="flex:0 0 auto">Dodaj</button>
+      </div>
+      <div class="hint">Prepoznavanje programa se oslanja na ovaj popis (npr. "krav magu" → Krav maga).</div>
+    </div>
+
+    <h2>Sigurnosna kopija</h2>
+    <div class="card">
+      <div class="hint" style="margin-top:0">Podaci su spremljeni samo na ovom mobitelu. Povremeno napravi kopiju — ako obrišeš podatke preglednika ili deinstaliraš app, nestaju.</div>
+      <div class="btns">
+        <button class="primary" id="backup">Izvezi kopiju</button>
+        <button class="ghost" id="restoreBtn">Uvezi kopiju</button>
+      </div>
+      <input type="file" id="restore" accept="application/json,.json" hidden>
+      <div class="hint" id="lastBackup"></div>
+    </div>
+    <div class="hint" style="text-align:center;margin:18px 0" id="ver"></div>
+  </section>
+</main>
+
+<datalist id="progs"></datalist>
+
+<nav>
+  <button class="on" data-v="danas">Danas</button>
+  <button data-v="mjeseci">Mjeseci</button>
+  <button data-v="postavke">Postavke</button>
+</nav>
+
+<dialog id="edit">
+  <h3 style="margin:0 0 10px">Uredi uplatu</h3>
+  <div class="grid3">
+    <div><label>Ime i/ili prezime</label><input id="e-name"></div>
+    <div class="row">
+      <div style="flex:1"><label>Iznos (€)</label><input id="e-amt" inputmode="decimal"></div>
+      <div style="flex:1.4"><label>Program</label><input id="e-prog" list="progs"></div>
+    </div>
+    <div><label>Datum i vrijeme</label><input id="e-ts" type="datetime-local"></div>
+    <label style="display:flex;gap:8px;align-items:center;font-size:15px;color:var(--text)"><input type="checkbox" id="e-fisk" style="width:22px;height:22px"> Fiskalizirano</label>
+  </div>
+  <div class="btns">
+    <button class="danger" id="e-del">Obriši</button>
+    <button class="ghost" id="e-close">Zatvori</button>
+    <button class="primary" id="e-save">Spremi</button>
+  </div>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script src="parser.js"></script>
+<script>
+const VERSION = '1.0';
+const KEY = 'sdg-uplate-v1';
+const $ = s => document.querySelector(s);
+const eur = n => (n ?? 0).toLocaleString('hr-HR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
+const pad = n => String(n).padStart(2, '0');
+const dayKey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const monKey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
+const MJ = ['siječanj','veljača','ožujak','travanj','svibanj','lipanj','srpanj','kolovoz','rujan','listopad','studeni','prosinac'];
+const DANI = ['nedjelja','ponedjeljak','utorak','srijeda','četvrtak','petak','subota'];
+const hm = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const fmtDay = d => `${DANI[d.getDay()]}, ${d.getDate()}. ${d.getMonth() + 1}. ${d.getFullYear()}.`;
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+// ---------- podaci ----------
+let db = load();
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY));
+    if (d && Array.isArray(d.entries)) return { programs: d.programs || [], entries: d.entries, lastBackup: d.lastBackup || null };
+  } catch (e) {}
+  return { programs: ['Krav maga', 'Kružni treninzi', 'BJJ'], entries: [], lastBackup: null };
+}
+function persist() {
+  try { localStorage.setItem(KEY, JSON.stringify(db)); }
+  catch (e) { toast('Greška pri spremanju!'); }
+}
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+
+function addProgram(p) {
+  if (p && !db.programs.some(x => x.toLowerCase() === p.toLowerCase())) db.programs.push(p);
+}
+const parseAmt = v => { const n = parseFloat(String(v).replace(/\s|€/g, '').replace(',', '.')); return isFinite(n) ? Math.round(n * 100) / 100 : null; };
+
+// ---------- unos ----------
+const txt = $('#txt');
+function showConfirm(text) {
+  const r = SDGParse.parse(text, db.programs);
+  $('#f-name').value = r.name || '';
+  $('#f-amt').value = r.amount != null ? String(r.amount).replace('.', ',') : '';
+  $('#f-prog').value = r.program || '';
+  $('#confirm').hidden = false;
+  $('#hint').hidden = true;
+  const miss = [!r.name && 'ime', r.amount == null && 'iznos', !r.program && 'program'].filter(Boolean);
+  if (miss.length) { toast('Nedostaje: ' + miss.join(', ')); (!r.name ? $('#f-name') : r.amount == null ? $('#f-amt') : $('#f-prog')).focus(); }
+}
+function resetInput() {
+  txt.value = ''; $('#confirm').hidden = true; $('#hint').hidden = false;
+}
+txt.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (txt.value.trim()) showConfirm(txt.value); }
+});
+txt.addEventListener('blur', () => { if (txt.value.trim() && $('#confirm').hidden) showConfirm(txt.value); });
+txt.addEventListener('input', () => { if (!$('#confirm').hidden && txt.value.trim()) showConfirm(txt.value); });
+$('#cancel').onclick = resetInput;
+$('#save').onclick = () => {
+  const name = $('#f-name').value.trim(), amount = parseAmt($('#f-amt').value), program = $('#f-prog').value.trim();
+  if (!name) return toast('Upiši ime ili prezime'), $('#f-name').focus();
+  if (amount == null || amount <= 0) return toast('Upiši ispravan iznos'), $('#f-amt').focus();
+  if (!program) return toast('Upiši program'), $('#f-prog').focus();
+  addProgram(program);
+  db.entries.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ts: new Date().toISOString(), name, amount, program, fisk: false, raw: txt.value.trim() });
+  persist(); resetInput(); render();
+  toast(`Spremljeno: ${name} · ${eur(amount)}`);
+};
+
+// ---------- glas ----------
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, listening = false;
+$('#mic').onclick = () => {
+  if (!SR) return toast('Glasovni unos nije podržan u ovom pregledniku — koristi Chrome');
+  if (listening) { rec.stop(); return; }
+  rec = new SR();
+  rec.lang = 'hr-HR'; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 1;
+  let finalText = '';
+  rec.onstart = () => { listening = true; $('#mic').classList.add('on'); txt.value = ''; txt.placeholder = 'Slušam…'; };
+  rec.onresult = e => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) finalText += e.results[i][0].transcript; else interim += e.results[i][0].transcript;
+    }
+    txt.value = (finalText + interim).trim();
+  };
+  rec.onerror = e => {
+    if (e.error === 'not-allowed') toast('Dozvoli pristup mikrofonu');
+    else if (e.error === 'no-speech') toast('Nisam ništa čuo');
+    else if (e.error === 'network') toast('Glasovni unos treba internet');
+    else toast('Greška: ' + e.error);
+  };
+  rec.onend = () => {
+    listening = false; $('#mic').classList.remove('on'); txt.placeholder = 'npr. Selver je platio 48 eura za krav maga';
+    if (txt.value.trim()) showConfirm(txt.value);
+  };
+  rec.start();
+};
+
+// ---------- prikaz ----------
+function entryLi(e, showTime = true) {
+  const d = new Date(e.ts);
+  return `<li data-id="${e.id}" class="${e.fisk ? 'done' : ''}">
+    <button class="chk ${e.fisk ? 'on' : ''}" data-fisk="${e.id}" aria-label="Fiskalizirano">${e.fisk ? CHECK : ''}</button>
+    <div class="who" data-edit="${e.id}"><b>${esc(e.name)}</b><span>${esc(e.program)}${showTime ? ' · ' + hm(d) : ''}</span></div>
+    <div class="amt" data-edit="${e.id}">${eur(e.amount)}</div></li>`;
+}
+function progPills(list) {
+  const m = {};
+  list.forEach(e => m[e.program] = (m[e.program] || 0) + e.amount);
+  return Object.entries(m).sort((a, b) => b[1] - a[1]).map(([p, s]) => `<span class="pill">${esc(p)}: ${eur(s)}</span>`).join('');
+}
+const sorted = () => [...db.entries].sort((a, b) => a.ts < b.ts ? 1 : -1);
+
+function render() {
+  const now = new Date();
+  $('#today').textContent = fmtDay(now);
+  const tk = dayKey(now);
+  const today = sorted().filter(e => dayKey(new Date(e.ts)) === tk);
+  $('#todayList').innerHTML = today.length ? today.map(e => entryLi(e)).join('') : '<div class="empty">Danas još nema uplata.</div>';
+  $('#dayTotal').textContent = eur(today.reduce((s, e) => s + e.amount, 0));
+  $('#toFisk').textContent = eur(today.filter(e => !e.fisk).reduce((s, e) => s + e.amount, 0));
+  $('#dayProgs').innerHTML = progPills(today);
+
+  // nefiskalizirano iz prethodnih dana
+  const older = sorted().filter(e => !e.fisk && dayKey(new Date(e.ts)) < tk);
+  $('#olderOpen').innerHTML = older.length ? `<h2>Nefiskalizirano od prije</h2><div class="card"><ul class="list">${older.map(e => entryLi(e)).join('')}</ul></div>` : '';
+  if (older.length) {
+    $('#olderOpen').querySelectorAll('li').forEach(li => {
+      const e = db.entries.find(x => x.id === li.dataset.id); const d = new Date(e.ts);
+      li.querySelector('.who span').textContent = `${e.program} · ${d.getDate()}.${d.getMonth() + 1}. ${hm(d)}`;
+    });
+  }
+
+  // mjeseci
+  const byM = {};
+  sorted().forEach(e => (byM[monKey(new Date(e.ts))] ||= []).push(e));
+  const keys = Object.keys(byM).sort().reverse();
+  $('#months').innerHTML = keys.length ? keys.map((k, i) => {
+    const list = byM[k], [y, m] = k.split('-');
+    const tot = list.reduce((s, e) => s + e.amount, 0);
+    const byD = {};
+    list.forEach(e => (byD[dayKey(new Date(e.ts))] ||= []).push(e));
+    const days = Object.keys(byD).sort().reverse().map(dk => {
+      const dl = byD[dk], d = new Date(dl[0].ts);
+      return `<div class="day"><span>${fmtDay(d)}</span><span>${eur(dl.reduce((s, e) => s + e.amount, 0))}</span></div><ul class="list">${dl.map(e => entryLi(e)).join('')}</ul>`;
+    }).join('');
+    return `<details class="month" ${i === 0 ? 'open' : ''}><summary><div><b style="text-transform:capitalize">${MJ[+m - 1]} ${y}.</b><div class="hint" style="margin:2px 0 0">${list.length} uplata</div></div><div class="big" style="font-size:20px">${eur(tot)}</div></summary>
+      <div class="body"><div>${progPills(list)}</div>${days}
+      <div class="btns"><button class="ghost" data-csv="${k}">Izvezi ${MJ[+m - 1]} (CSV)</button></div></div></details>`;
+  }).join('') : '<div class="card empty">Još nema spremljenih uplata.</div>';
+
+  // postavke
+  $('#progs').innerHTML = db.programs.map(p => `<option value="${esc(p)}">`).join('');
+  $('#progList').innerHTML = db.programs.map((p, i) => `<li><span>${esc(p)}</span><button class="ghost" data-rmprog="${i}" style="padding:6px 12px">Ukloni</button></li>`).join('') || '<div class="empty">Nema programa.</div>';
+  $('#lastBackup').textContent = db.lastBackup ? 'Zadnja kopija: ' + new Date(db.lastBackup).toLocaleString('hr-HR') : 'Kopija još nije napravljena.';
+  $('#ver').textContent = `SDG Uplate v${VERSION} · ${db.entries.length} uplata spremljeno`;
+}
+
+// ---------- klikovi ----------
+document.addEventListener('click', ev => {
+  const t = ev.target.closest('[data-fisk],[data-edit],[data-csv],[data-rmprog]');
+  if (!t) return;
+  if (t.dataset.fisk) {
+    const e = db.entries.find(x => x.id === t.dataset.fisk); e.fisk = !e.fisk; persist(); render();
+  } else if (t.dataset.edit) openEdit(t.dataset.edit);
+  else if (t.dataset.csv) exportCSV(t.dataset.csv);
+  else if (t.dataset.rmprog) { db.programs.splice(+t.dataset.rmprog, 1); persist(); render(); }
+});
+
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'v-' + b.dataset.v));
+  scrollTo(0, 0);
+});
+
+// ---------- uređivanje ----------
+let editId = null;
+const toLocalInput = iso => { const d = new Date(iso); return `${dayKey(d)}T${hm(d)}`; };
+function openEdit(id) {
+  const e = db.entries.find(x => x.id === id); if (!e) return;
+  editId = id;
+  $('#e-name').value = e.name; $('#e-amt').value = String(e.amount).replace('.', ',');
+  $('#e-prog').value = e.program; $('#e-ts').value = toLocalInput(e.ts); $('#e-fisk').checked = !!e.fisk;
+  $('#edit').showModal();
+}
+$('#e-close').onclick = () => $('#edit').close();
+$('#e-save').onclick = () => {
+  const e = db.entries.find(x => x.id === editId);
+  const amount = parseAmt($('#e-amt').value);
+  if (!$('#e-name').value.trim() || amount == null || !$('#e-prog').value.trim()) return toast('Ispuni sva polja');
+  e.name = $('#e-name').value.trim(); e.amount = amount; e.program = $('#e-prog').value.trim(); e.fisk = $('#e-fisk').checked;
+  if ($('#e-ts').value) e.ts = new Date($('#e-ts').value).toISOString();
+  addProgram(e.program); persist(); render(); $('#edit').close(); toast('Ispravljeno');
+};
+let delArmed = false;
+$('#e-del').onclick = () => {
+  if (!delArmed) { delArmed = true; $('#e-del').textContent = 'Sigurno?'; setTimeout(() => { delArmed = false; $('#e-del').textContent = 'Obriši'; }, 3000); return; }
+  db.entries = db.entries.filter(x => x.id !== editId); persist(); render(); $('#edit').close(); toast('Obrisano');
+  delArmed = false; $('#e-del').textContent = 'Obriši';
+};
+
+// ---------- programi ----------
+$('#addProg').onclick = () => { const v = $('#newProg').value.trim(); if (v) { addProgram(v); $('#newProg').value = ''; persist(); render(); } };
+
+// ---------- izvoz / uvoz ----------
+async function share(filename, content, type) {
+  const blob = new Blob([content], { type });
+  const file = new File([blob], filename, { type });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: filename }); return; } catch (e) { if (e.name === 'AbortError') return; }
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+function exportCSV(k) {
+  const rows = db.entries.filter(e => monKey(new Date(e.ts)) === k).sort((a, b) => a.ts < b.ts ? -1 : 1);
+  const q = s => `"${String(s).replace(/"/g, '""')}"`;
+  const lines = ['Datum;Vrijeme;Ime i prezime;Program;Iznos (EUR);Fiskalizirano'];
+  rows.forEach(e => { const d = new Date(e.ts); lines.push([`${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${d.getFullYear()}.`, hm(d), q(e.name), q(e.program), e.amount.toFixed(2).replace('.', ','), e.fisk ? 'DA' : 'NE'].join(';')); });
+  lines.push(`;;;UKUPNO;${rows.reduce((s, e) => s + e.amount, 0).toFixed(2).replace('.', ',')};`);
+  share(`uplate-${k}.csv`, '\uFEFF' + lines.join('\r\n'), 'text/csv');
+}
+$('#backup').onclick = async () => {
+  db.lastBackup = new Date().toISOString(); persist();
+  await share(`sdg-uplate-kopija-${dayKey(new Date())}.json`, JSON.stringify(db, null, 1), 'application/json');
+  render();
+};
+$('#restoreBtn').onclick = () => $('#restore').click();
+$('#restore').onchange = async ev => {
+  const f = ev.target.files[0]; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (!Array.isArray(d.entries)) throw 0;
+    const ids = new Set(db.entries.map(e => e.id));
+    let n = 0;
+    d.entries.forEach(e => { if (e && e.id && !ids.has(e.id)) { db.entries.push(e); n++; } });
+    (d.programs || []).forEach(addProgram);
+    persist(); render(); toast(`Uvezeno ${n} novih uplata`);
+  } catch (e) { toast('Neispravna datoteka'); }
+  ev.target.value = '';
+};
+
+// ---------- ostalo ----------
+let tt;
+function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => t.classList.remove('on'), 2400); }
+document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
+render();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+</script>
+</body>
+</html>
