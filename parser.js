@@ -50,6 +50,8 @@
     if (!p) return '';
     const exact = known.find(k => k.toLowerCase() === p.toLowerCase()) || known.find(k => similar(k, p));
     if (exact) return exact;
+    const al = known.find(k => fixAliases(k) === fixAliases(p));  // "BJJ" ~ "Brazilski jiu jitsu"
+    if (al) return al;
     // skraćeno: "kružni" -> "Kružni treninzi", "krav" -> "Krav maga"
     const pw = p.toLowerCase().split(/\s+/);
     const pref = known.filter(k => { const kw = k.split(/\s+/); return kw.length > pw.length && similar(kw.slice(0, pw.length).join(' '), p); });
@@ -68,7 +70,7 @@
     // krav maga, crow maga, kraw maga, grav maga, krov maka, crawl magu, kravmaga...
     [new RegExp(B + '[ckg]r[aeiou]{1,2}[a-z]{0,3}\\s*-?\\s*ma[gkc]h?[aeiou]?' + E, 'giu'), 'Krav maga'],
     // BJJ, BJ, B J J, b.j.j., bi dži dži, be je je, jiu jitsu, brazilski jiu jitsu...
-    [new RegExp(B + '(?:brazilsk[a-z]*\\s+)?(?:j[iu]{1,2}|d[žz]i?u|đu)[\\s-]*(?:j|d[žz]|đ)i[tcć]s?u' + E, 'giu'), 'BJJ'],
+    [new RegExp(B + '(?:brazil[a-z]*\\s+)?(?:j[iu]{1,2}|d[žz]i?u|đu)[\\s-]*(?:j|d[žz]|đ)i[tcć]s?u' + E, 'giu'), 'BJJ'],
     [new RegExp(B + '(?:b\\.?\\s*j\\.?\\s*j?\\.?|bi\\s*d[žz]i(?:\\s*d[žz]i)?|be\\s*je(?:\\s*je)?|be\\s*jot(?:\\s*jot)?|b\\s*jot(?:\\s*jot)?)' + E, 'giu'), 'BJJ'],
   ];
   function fixAliases(s) {
@@ -97,20 +99,28 @@
     let nameToks = toks(s.slice(0, m.index)).filter(t => !STOP.has(t.toLowerCase()));
     const progToks = toks(s.slice(m.index + m[0].length));
     while (progToks.length && PSTOP.has(progToks[0].toLowerCase())) progToks.shift();
-    let program = progToks.join(' ');
+    let program = '';
 
-    // program izgovoren prije iznosa: "Selver krav maga 48 eura"
-    if (!program && known.length) {
-      for (const k of [...known].sort((a, b) => b.length - a.length)) {
+    // nađi program s popisa: prvo odmah iza iznosa, pa bilo gdje iza, pa u dijelu prije iznosa
+    const byLen = [...known].sort((x, y) => y.split(/\s+/).length - x.split(/\s+/).length || y.length - x.length);
+    const findIn = (arr, from = 0) => {
+      for (let i = from; i < arr.length; i++) for (const k of byLen) {
         const kw = k.split(/\s+/).length;
-        if (nameToks.length > kw && similar(nameToks.slice(-kw).join(' '), k)) {
-          program = k; nameToks = nameToks.slice(0, -kw); break;
-        }
-        // "Krav maga, Selver, 48 eura"
-        if (nameToks.length > kw && similar(nameToks.slice(0, kw).join(' '), k)) {
-          program = k; nameToks = nameToks.slice(kw); break;
-        }
+        if (i + kw <= arr.length && similar(arr.slice(i, i + kw).join(' '), k)) return { k, i, kw };
       }
+      return null;
+    };
+    let hit = findIn(progToks);
+    if (hit) {
+      program = hit.k;                       // sve iza programa je višak (snimio je predugo)
+    } else if ((hit = findIn(nameToks)) && nameToks.length > hit.kw) {
+      program = hit.k;                       // "Selver krav maga 48 eura" / "Krav maga, Selver, 48"
+      nameToks = nameToks.slice(0, hit.i).concat(nameToks.slice(hit.i + hit.kw));
+    } else if (progToks.length) {
+      // nepoznat program: uzmi prvu riječ ili dvije, ne cijelu rečenicu
+      const c = canonProgram(progToks.slice(0, 2).join(' '), known);
+      program = known.includes(c) ? c : canonProgram(progToks[0], known);
+      if (!known.includes(program) && progToks.length <= 3) program = canonProgram(progToks.join(' '), known);
     }
     return { name: nameToks.map(cap).join(' '), amount, program: canonProgram(program, known) };
   }

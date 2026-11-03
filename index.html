@@ -92,6 +92,8 @@ input[type=checkbox]{accent-color:var(--ok)}
         </button>
       </div>
 
+      <button class="primary" id="stopBar" hidden style="width:100%;margin-top:10px;background:var(--bad);color:#fff">■&nbsp; Gotovo — zaustavi snimanje</button>
+
       <div id="confirm" hidden>
         <div class="grid3">
           <div><label>Ime i/ili prezime</label><input id="f-name" autocomplete="off"></div>
@@ -191,7 +193,7 @@ input[type=checkbox]{accent-color:var(--ok)}
 
 <script src="parser.js"></script>
 <script>
-const VERSION = '1.1';
+const VERSION = '1.2';
 const KEY = 'sdg-uplate-v1';
 const $ = s => document.querySelector(s);
 const eur = n => (n ?? 0).toLocaleString('hr-HR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
@@ -269,14 +271,36 @@ function bestAlt(res) {
   }
   return best;
 }
+const MIC_ICON = $('#mic').innerHTML;
+const STOP_ICON = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>';
+let stopped = false;
+function setListening(on) {
+  listening = on;
+  $('#mic').classList.toggle('on', on);
+  $('#mic').innerHTML = on ? STOP_ICON : MIC_ICON;
+  $('#mic').setAttribute('aria-label', on ? 'Zaustavi snimanje' : 'Glasovni unos');
+  $('#stopBar').hidden = !on;
+  if (on) $('#hint').hidden = true; else if ($('#confirm').hidden) $('#hint').hidden = false;
+  txt.placeholder = on ? 'Slušam…' : 'npr. Selver je platio 48 eura za krav maga';
+}
+// zaustavi odmah i uzmi točno ono što piše u polju (ništa se više ne dodaje)
+function stopNow() {
+  if (!listening) return;
+  stopped = true;
+  try { rec.abort(); } catch (e) {}
+}
+$('#stopBar').onclick = stopNow;
 $('#mic').onclick = () => {
   if (!SR) return toast('Glasovni unos nije podržan u ovom pregledniku — koristi Chrome');
-  if (listening) { rec.stop(); return; }
+  if (listening) return stopNow();
   rec = new SR();
   rec.lang = 'hr-HR'; rec.interimResults = true; rec.continuous = false; rec.maxAlternatives = 5;
   let finalText = '';
-  rec.onstart = () => { listening = true; $('#mic').classList.add('on'); txt.value = ''; txt.placeholder = 'Slušam…'; };
+  stopped = false;
+  $('#confirm').hidden = true;
+  rec.onstart = () => { txt.value = ''; setListening(true); };
   rec.onresult = e => {
+    if (stopped) return;
     let interim = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
       if (e.results[i].isFinal) finalText += bestAlt(e.results[i]); else interim += e.results[i][0].transcript;
@@ -284,15 +308,17 @@ $('#mic').onclick = () => {
     txt.value = (finalText + interim).trim();
   };
   rec.onerror = e => {
+    if (e.error === 'aborted') return;
     if (e.error === 'not-allowed') toast('Dozvoli pristup mikrofonu');
     else if (e.error === 'no-speech') toast('Nisam ništa čuo');
     else if (e.error === 'network') toast('Glasovni unos treba internet');
     else toast('Greška: ' + e.error);
   };
   rec.onend = () => {
-    listening = false; $('#mic').classList.remove('on'); txt.placeholder = 'npr. Selver je platio 48 eura za krav maga';
+    setListening(false);
     if (txt.value.trim()) showConfirm(txt.value);
   };
+  setListening(true);
   rec.start();
 };
 
