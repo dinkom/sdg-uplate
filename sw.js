@@ -1,10 +1,11 @@
 // SDG Alati - offline cache za sve module.
 // Kod svake nove verzije povećaj broj u CACHE; kod novog modula dodaj njegove datoteke u FILES.
-const CACHE = 'sdg-alati-v1';
+const CACHE = 'sdg-alati-v2';
 const FILES = [
   './', './index.html', './common.css', './manifest.webmanifest',
   './icon-192.png', './icon-512.png', './icon-maskable-512.png',
   './uplate/', './uplate/index.html', './uplate/parser.js',
+  './privatni/', './privatni/index.html',
 ];
 
 self.addEventListener('install', e => {

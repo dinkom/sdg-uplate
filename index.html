@@ -36,7 +36,8 @@ a.tile:active{transform:scale(.98)}
   <h2>Sigurnosna kopija</h2>
   <div class="card">
     <div class="hint" style="margin-top:0">Jedna datoteka s podacima svih modula. Podaci postoje samo na ovom mobitelu, zato je povremeno spremi na Drive ili pošalji sebi.</div>
-    <div class="btns"><button class="primary" id="backupAll">Izvezi kopiju svega</button></div>
+    <div class="btns"><button class="primary" id="backupAll">Izvezi kopiju svega</button><button class="ghost" id="restoreAllBtn">Uvezi</button></div>
+    <input type="file" id="restoreAll" accept="application/json,.json" hidden>
     <div class="hint" id="lastBackup"></div>
   </div>
   <div class="hint" style="text-align:center;margin:18px 0" id="ver"></div>
@@ -45,7 +46,7 @@ a.tile:active{transform:scale(.98)}
 <div class="toast" id="toast"></div>
 
 <script>
-const VERSION = '1.0';
+const VERSION = '1.1';
 const $ = s => document.querySelector(s);
 const pad = n => String(n).padStart(2, '0');
 const dayKey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -70,6 +71,17 @@ const MODULES = [
       const older = open.filter(e => dayKey(new Date(e.ts)) < tk).length;
       if (!open.length) return '';
       return `${eur(today)}<small>za fiskalizirati${older ? ` · +${older} od prije` : ''}</small>`;
+    }
+  },
+  {
+    id: 'privatni', href: 'privatni/', title: 'Privatni', desc: 'Privatni treninzi i paketi',
+    key: 'sdg-privatni-v1',
+    icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 4.5l1.5 1.5L21 2.5" /><path d="M17 11h4M19 9v4"/></svg>',
+    badge() {
+      const d = read(this.key); if (!d || !d.sessions) return '';
+      const tk = dayKey(new Date());
+      const today = d.sessions.filter(s => !s.cancelled && dayKey(new Date(s.ts)) === tk).length;
+      return today ? `${today}<small>${today === 1 ? 'trening danas' : 'treninga danas'}</small>` : '';
     }
   },
 ];
@@ -106,6 +118,32 @@ $('#backupAll').onclick = async () => {
   try { localStorage.setItem('sdg-alati-meta', JSON.stringify(meta)); } catch (e) {}
   await share(`sdg-alati-kopija-${dayKey(new Date())}.json`, JSON.stringify({ app: 'SDG Alati', created: meta.lastBackup, modules }, null, 1), 'application/json');
   render();
+};
+
+// uvoz: dodaje ono što nedostaje (spaja po id-u), postojeće ne dira i ništa ne briše
+$('#restoreAllBtn').onclick = () => $('#restoreAll').click();
+$('#restoreAll').onchange = async ev => {
+  const f = ev.target.files[0]; if (!f) return;
+  try {
+    const b = JSON.parse(await f.text());
+    if (!b || !b.modules) throw 0;
+    let added = 0;
+    for (const [key, incoming] of Object.entries(b.modules)) {
+      if (!key.startsWith('sdg-')) continue;
+      const local = read(key);
+      if (!local) { localStorage.setItem(key, JSON.stringify(incoming)); added += Object.values(incoming).filter(Array.isArray).reduce((a, x) => a + x.length, 0); continue; }
+      for (const [field, val] of Object.entries(incoming)) {
+        if (!Array.isArray(val)) continue;
+        if (!Array.isArray(local[field])) { local[field] = val; added += val.length; continue; }
+        if (val.every(x => typeof x !== 'object')) { val.forEach(x => { if (!local[field].includes(x)) local[field].push(x); }); continue; }
+        const ids = new Set(local[field].map(x => x && x.id));
+        val.forEach(x => { if (x && x.id && !ids.has(x.id)) { local[field].push(x); added++; } });
+      }
+      localStorage.setItem(key, JSON.stringify(local));
+    }
+    toast(`Uvezeno ${added} novih zapisa`); render();
+  } catch (e) { toast('Neispravna datoteka'); }
+  ev.target.value = '';
 };
 
 let tt;
