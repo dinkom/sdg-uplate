@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="common.css">
 <style>
 body{padding-bottom:calc(24px + env(safe-area-inset-bottom))}
-.tiles{display:grid;grid-template-columns:1fr;gap:10px;margin-top:10px}
+.tiles{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-top:10px}
 a.tile{display:flex;gap:14px;align-items:center;text-decoration:none;color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
 a.tile:active{transform:scale(.98)}
 .ico{width:52px;height:52px;flex:0 0 52px;border-radius:14px;background:var(--gold);color:#1c1f17;display:grid;place-items:center}
@@ -19,8 +19,9 @@ a.tile:active{transform:scale(.98)}
 .tile .t{flex:1;min-width:0}
 .tile .t b{display:block;font-size:17px}
 .tile .t span{color:var(--muted);font-size:13px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tile .badge{font-weight:700;color:var(--gold);white-space:nowrap;text-align:right;font-size:15px}
-.tile .badge small{display:block;color:var(--muted);font-weight:400;font-size:11px}
+.tile .badge{display:block;margin-top:4px;font-weight:700;color:var(--gold);font-size:14px}
+.tile .badge:empty{display:none}
+.tile .badge small{color:var(--muted);font-weight:400;font-size:13px;margin-left:4px}
 .arrow{color:var(--muted);font-size:22px}
 </style>
 </head>
@@ -46,7 +47,7 @@ a.tile:active{transform:scale(.98)}
 <div class="toast" id="toast"></div>
 
 <script>
-const VERSION = '1.1';
+const VERSION = '1.2';
 const $ = s => document.querySelector(s);
 const pad = n => String(n).padStart(2, '0');
 const dayKey = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -92,8 +93,7 @@ function render() {
   $('#tiles').innerHTML = MODULES.map(m => `
     <a class="tile" href="${m.href}">
       <div class="ico">${m.icon}</div>
-      <div class="t"><b>${esc(m.title)}</b><span>${esc(m.desc)}</span></div>
-      ${m.badge ? `<div class="badge">${m.badge() || ''}</div>` : ''}
+      <div class="t"><b>${esc(m.title)}</b><span>${esc(m.desc)}</span>${m.badge ? `<div class="badge">${m.badge() || ''}</div>` : ''}</div>
       <div class="arrow">›</div>
     </a>`).join('');
   const meta = read('sdg-alati-meta') || {};
