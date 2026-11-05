@@ -1,7 +1,7 @@
 {
-  "name": "SDG Uplate",
-  "short_name": "Uplate",
-  "description": "Evidencija uplata članarina za fiskalizaciju",
+  "name": "SDG Alati",
+  "short_name": "SDG Alati",
+  "description": "Mini aplikacije za SDG Gym",
   "lang": "hr",
   "start_url": "./",
   "scope": "./",
@@ -13,5 +13,8 @@
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Uplate", "url": "uplate/", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] }
   ]
 }

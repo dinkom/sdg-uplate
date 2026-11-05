@@ -1,6 +1,11 @@
-// SDG Uplate - offline cache. Kod svake nove verzije povećaj broj u CACHE.
-const CACHE = 'sdg-uplate-v3';
-const FILES = ['./', './index.html', './parser.js', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
+// SDG Alati - offline cache za sve module.
+// Kod svake nove verzije povećaj broj u CACHE; kod novog modula dodaj njegove datoteke u FILES.
+const CACHE = 'sdg-alati-v1';
+const FILES = [
+  './', './index.html', './common.css', './manifest.webmanifest',
+  './icon-192.png', './icon-512.png', './icon-maskable-512.png',
+  './uplate/', './uplate/index.html', './uplate/parser.js',
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
